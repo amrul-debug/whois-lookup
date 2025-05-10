@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
 
 const corsHeaders = {
@@ -32,8 +31,8 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }

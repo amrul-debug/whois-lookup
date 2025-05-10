@@ -5,30 +5,30 @@ export const useIpLookup = () => {
   const [data, setData] = useState<IpDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const lookupIp = useCallback(async (ip: string): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
       setData(null);
-      
+
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ip-lookup?ip=${encodeURIComponent(ip)}`;
       const response = await fetch(apiUrl, {
         headers: {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
       });
-      
+
       if (!response.ok) {
         throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
-      
+
       const result = await response.json();
-      
+
       if (result.error) {
         throw new Error(result.reason || 'Failed to lookup IP address');
       }
-      
+
       const ipDetails: IpDetails = {
         ip: result.ip,
         version: result.version,
@@ -48,7 +48,7 @@ export const useIpLookup = () => {
         utc_offset: result.utc_offset,
         asn: result.asn,
         org: result.org,
-        isp: result.org,
+        isp: result.isp || result.org,
         languages: result.languages,
         currency: result.currency,
         currency_name: result.currency_name,
@@ -61,7 +61,7 @@ export const useIpLookup = () => {
           tor: result.connection?.tor || false,
         }
       };
-      
+
       setData(ipDetails);
       saveToHistory(ip);
     } catch (err) {
@@ -70,7 +70,7 @@ export const useIpLookup = () => {
       setLoading(false);
     }
   }, []);
-  
+
   const saveToHistory = (ip: string) => {
     try {
       const historyKey = 'ip-lookup-history';
@@ -81,7 +81,7 @@ export const useIpLookup = () => {
         query: ip,
         timestamp: Date.now()
       };
-      
+
       const updatedHistory = [newHistoryItem, ...existingHistory].slice(0, 10);
       localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
     } catch (err) {

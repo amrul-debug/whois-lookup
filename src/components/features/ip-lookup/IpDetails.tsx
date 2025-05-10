@@ -9,7 +9,7 @@ interface IpDetailsProps {
 }
 
 const IpDetails: React.FC<IpDetailsProps> = ({ data }) => {
-  // Info: group data into sections for display
+
   const sections = [
     {
       title: 'IP Information',

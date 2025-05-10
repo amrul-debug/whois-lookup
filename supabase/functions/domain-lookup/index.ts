@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createClient } from 'npm:@supabase/supabase-js@2.39.0';
 import whois from 'npm:whois-json@1.3.1';
 
@@ -51,10 +50,10 @@ Deno.serve(async (req) => {
         phone: whoisData.registrantPhone || 'REDACTED FOR PRIVACY',
         email: whoisData.registrantEmail || 'REDACTED FOR PRIVACY',
       },
-      nameservers: Array.isArray(whoisData.nameServer) 
-        ? whoisData.nameServer 
-        : whoisData.nameServer 
-          ? [whoisData.nameServer] 
+      nameservers: Array.isArray(whoisData.nameServer)
+        ? whoisData.nameServer
+        : whoisData.nameServer
+          ? [whoisData.nameServer]
           : [],
       dnssec: whoisData.dnssec === 'signedDelegation',
     };
@@ -64,8 +63,8 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }

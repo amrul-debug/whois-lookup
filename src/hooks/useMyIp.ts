@@ -11,19 +11,19 @@ export const useMyIp = () => {
     try {
       setLoading(true);
       setError(null);
-    
+
       const response = await fetch('https://ipapi.co/json/');
-      
+
       if (!response.ok) {
         throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
-      
+
       const result = await response.json();
-      
+
       if (result.error) {
         throw new Error(result.reason || 'Failed to lookup IP address');
       }
-      
+
       const ipDetails: IpDetails = {
         ip: result.ip,
         version: result.version,
@@ -43,48 +43,47 @@ export const useMyIp = () => {
         utc_offset: result.utc_offset,
         asn: result.asn,
         org: result.org,
-        isp: result.org, 
+        isp: result.isp || result.org,
         languages: result.languages,
         currency: result.currency,
         currency_name: result.currency_name,
         currency_symbol: result.currency_symbol,
         connection: {
-          type: 'unknown', // Info: ipapi doesn't provide this info
+          type: 'unknown',
           mobile: false,
           proxy: false,
           vpn: false,
           tor: false
         }
       };
-      
+
       setIpData(ipDetails);
-      
+
       // get system information
       const sysInfo = getSystemInfo();
       setSystemInfo(sysInfo);
-      
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
   }, []);
-  
-  // get browser and system information
+
   const getSystemInfo = (): SystemInfo => {
     const userAgent = navigator.userAgent;
     const platform = navigator.platform;
-    
-    // detect browser
+
+
     const isChrome = userAgent.indexOf('Chrome') > -1;
     const isFirefox = userAgent.indexOf('Firefox') > -1;
     const isSafari = userAgent.indexOf('Safari') > -1 && !isChrome;
     const isEdge = userAgent.indexOf('Edg') > -1;
     const isIE = userAgent.indexOf('MSIE') > -1 || userAgent.indexOf('Trident/') > -1;
-    
+
     let browserName = 'Unknown';
     let browserVersion = 'Unknown';
-    
+
     if (isEdge) {
       browserName = 'Microsoft Edge';
       const version = userAgent.match(/Edg\/(\d+\.\d+)/);
@@ -106,11 +105,11 @@ export const useMyIp = () => {
       const version = userAgent.match(/(?:MSIE |rv:)(\d+\.\d+)/);
       browserVersion = version ? version[1] : 'Unknown';
     }
-    
-    // detect OS
+
+
     let osName = 'Unknown';
     let osVersion = 'Unknown';
-    
+
     if (userAgent.indexOf('Windows') > -1) {
       osName = 'Windows';
       if (userAgent.indexOf('Windows NT 10.0') > -1) osVersion = '10/11';
@@ -137,20 +136,20 @@ export const useMyIp = () => {
     } else if (userAgent.indexOf('Linux') > -1) {
       osName = 'Linux';
     }
-    
-    // detect device type
+
+
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
     const isTablet = /iPad|Android(?!.*Mobile)/i.test(userAgent);
     const isDesktop = !isMobile && !isTablet;
-    
-    // Info: connection info (if available)
+
+
     let connection = {
       type: 'unknown',
       downlink: 0,
       rtt: 0,
       effectiveType: 'unknown'
     };
-    
+
     if ('connection' in navigator) {
       const networkInfo = (navigator as any).connection;
       if (networkInfo) {
@@ -162,7 +161,7 @@ export const useMyIp = () => {
         };
       }
     }
-    
+
     return {
       browser: {
         name: browserName,
@@ -186,8 +185,8 @@ export const useMyIp = () => {
       connection
     };
   };
-  
-  // load IP information on component mount
+
+
   useEffect(() => {
     getMyIp();
   }, [getMyIp]);

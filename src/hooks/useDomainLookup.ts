@@ -11,20 +11,40 @@ export const useDomainLookup = () => {
       setLoading(true);
       setError(null);
       setData(null);
-      
-      // TODO: mock data since real WHOIS lookup would require a backend API
-      // TODO: in production, this would call a backend service that makes the actual WHOIS query
-      await mockApiCall(domain);
-      
+
+      try {
+        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/domain-lookup?domain=${encodeURIComponent(domain)}`;
+        const response = await fetch(apiUrl, {
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (result.error) {
+          throw new Error(result.error || 'Failed to lookup domain information');
+        }
+
+        setData(result);
+      } catch (apiError) {
+        console.warn('API call failed, falling back to mock data:', apiError);
+        await mockApiCall(domain);
+      }
+
       saveToHistory(domain);
-      
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
   }, []);
-  
+
   const mockApiCall = async (domain: string) => {
     return new Promise<void>((resolve) => {
       setTimeout(() => {
@@ -52,18 +72,18 @@ export const useDomainLookup = () => {
             phone: 'REDACTED FOR PRIVACY',
             email: 'REDACTED FOR PRIVACY'
           },
-          nameservers: domain.includes('google') 
-            ? ['ns1.googledomains.com', 'ns2.googledomains.com', 'ns3.googledomains.com', 'ns4.googledomains.com'] 
+          nameservers: domain.includes('google')
+            ? ['ns1.googledomains.com', 'ns2.googledomains.com', 'ns3.googledomains.com', 'ns4.googledomains.com']
             : [`ns1.${domain}`, `ns2.${domain}`],
           dnssec: Math.random() > 0.5
         };
-        
+
         setData(mockData);
         resolve();
-      }, 800); 
+      }, 800);
     });
   };
-  
+
   const saveToHistory = (domain: string) => {
     try {
       const historyKey = 'domain-lookup-history';
@@ -74,7 +94,7 @@ export const useDomainLookup = () => {
         query: domain,
         timestamp: Date.now()
       };
-      
+
       const updatedHistory = [newHistoryItem, ...existingHistory].slice(0, 10);
       localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
     } catch (err) {
